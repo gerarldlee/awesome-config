@@ -1,0 +1,16 @@
+[submodule "lain"]
+	path = lain
+	url = https://github.com/lcpz/lain
+[submodule "freedesktop"]
+	path = freedesktop
+    url = https://github.com/lcpz/awesome-freedesktop.git
+[submodule "custom-themes/awesome-copycats"]
+    path = custom-themes/awesome-copycats
+    url = https://github.com/lcpz/awesome-copycats
+[submodule "custom-themes/awesome-config"]
+    path = custom-themes/awesome-config
+    url = https://github.com/worron/awesome-config.git
+[submodule "custom-themes/awesome-pro"]
+    path = custom-themes/awesome-pro
+    url = https://github.com/4ban/awesome-pro
+    

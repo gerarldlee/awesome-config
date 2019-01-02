@@ -1,0 +1,121 @@
+-- edit menu
+sudo -i gnome-software
+
+-- additonal software
+
+-- fonts
+apt-get install xfonts-terminus
+
+-- create install script for awesome
+
+https://makandracards.com/makandra/1367-running-the-awesome-window-manager-within-gnome
+https://scaron.info/blog/awesome-with-gnome-on-ubuntu.html
+https://github.com/glsorre/i3-gnome
+
+apt install -y i3 gnome-flashback
+make install
+make uninstall
+
+Makefile:
+#
+# Global Settings
+#
+
+INSTALL = install
+DESTDIR ?= /
+PREFIX  ?= $(DESTDIR)/usr
+
+PATH_I3_GNOME = $(PREFIX)/bin/i3-gnome
+PATH_I3_GNOME_DESKTOP = $(PREFIX)/share/applications/i3-gnome.desktop
+PATH_I3_GNOME_SESSION = $(PREFIX)/share/gnome-session/sessions/i3-gnome.session
+PATH_I3_GNOME_XSESSION = $(PREFIX)/share/xsessions/i3-gnome.desktop
+PATH_GNOME_SESSION_I3 = $(PREFIX)/bin/gnome-session-i3
+
+#
+# Targets
+#
+
+all:
+	@echo "Nothing to do"
+
+
+install:
+	$(INSTALL) -m0644 -D session/i3-gnome-xsession.desktop $(PATH_I3_GNOME_XSESSION)
+	$(INSTALL) -m0644 -D session/i3-gnome.desktop $(PATH_I3_GNOME_DESKTOP)
+	$(INSTALL) -m0644 -D session/i3-gnome.session $(PATH_I3_GNOME_SESSION)
+	$(INSTALL) -m0755 -D session/i3-gnome $(PATH_I3_GNOME)
+	$(INSTALL) -m0755 -D session/gnome-session-i3 $(PATH_GNOME_SESSION_I3)
+
+
+
+uninstall:
+	rm -f $(PATH_I3_GNOME)
+	rm -f $(PATH_I3_GNOME_DESKTOP)
+	rm -f $(PATH_I3_GNOME_SESSION)
+	rm -f $(PATH_I3_GNOME_XSESSION)
+	rm -f $(PATH_GNOME_SESSION_I3)
+
+
+
+.PHONY: all install uninstall
+
+session/gnome-session-i3:
+#! /bin/sh
+env GNOME_SHELL_SESSION_MODE=classic gnome-session --session i3-gnome "$@"
+
+session/i3-gnome:
+#!/bin/bash
+
+# Register with gnome-session so that it does not kill the whole session thinking it is dead.
+test -n "$DESKTOP_AUTOSTART_ID" && {
+    dbus-send --print-reply --session --dest=org.gnome.SessionManager "/org/gnome/SessionManager" org.gnome.SessionManager.RegisterClient "string:i3-gnome" "string:$DESKTOP_AUTOSTART_ID"
+}
+
+procs=("/usr/bin/gnome-flashback" "/usr/lib/gnome-settings-daemon/gsd-xsettings" "/usr/bin/gnome-keyring-daemon -f")
+procslength=${#procs[@]}
+
+for (( i=0; i<${procslength}; i++ )); do
+    ${procs[$i]} &
+    pids[$i]=$!
+done
+
+sleep 3
+i3
+
+for pid in ${pids[*]}; do
+    kill $pid
+done
+
+test -n "$DESKTOP_AUTOSTART_ID" && {
+dbus-send --print-reply --session --dest=org.gnome.SessionManager "/org/gnome/SessionManager" org.gnome.SessionManager.Logout "uint32:1"
+}
+
+session/i3-gnome-xsession.desktop:
+[Desktop Entry]
+Name=GNOME + i3
+Comment=This session logs you into GNOME with i3 as the window manager
+Exec=gnome-session-i3
+TryExec=i3-gnome
+Icon=
+Type=Application
+DesktopNames=GNOME
+X-Ubuntu-Gettext-Domain=gnome-session-3.0
+
+session/i3-gnome.desktop:
+[Desktop Entry]
+Type=Application
+Name=i3-gnome
+NoDisplay=true
+Comment=improved dynamic tiling window manager
+Exec=i3-gnome
+X-GNOME-WMName=i3-gnome
+X-GNOME-Autostart-Phase=WindowManager
+X-GNOME-Provides=windowmanager
+X-GNOME-Autostart-Notify=false
+
+session/i3-gnome.session:
+# -*- mode: conf -*-
+
+[GNOME Session]
+Name=i3-gnome
+RequiredComponents=org.gnome.SettingsDaemon.A11ySettings;org.gnome.SettingsDaemon.Clipboard;org.gnome.SettingsDaemon.Color;org.gnome.SettingsDaemon.Datetime;org.gnome.SettingsDaemon.Housekeeping;org.gnome.SettingsDaemon.Keyboard;org.gnome.SettingsDaemon.MediaKeys;org.gnome.SettingsDaemon.Mouse;org.gnome.SettingsDaemon.Power;org.gnome.SettingsDaemon.PrintNotifications;org.gnome.SettingsDaemon.Rfkill;org.gnome.SettingsDaemon.ScreensaverProxy;org.gnome.SettingsDaemon.Sharing;org.gnome.SettingsDaemon.Smartcard;org.gnome.SettingsDaemon.Sound;org.gnome.SettingsDaemon.Wacom;org.gnome.SettingsDaemon.XSettings;i3-gnome
